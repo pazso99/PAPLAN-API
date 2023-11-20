@@ -1,7 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Spending\AccountController;
+use App\Http\Controllers\Spending\TransactionCategoryController;
+use App\Http\Controllers\Spending\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,4 +21,31 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'getUser']);
+
+    Route::prefix('/spending')->group(function () {
+        Route::prefix('/accounts')->group(function () {
+            Route::get('/', [AccountController::class, 'index']);
+            Route::post('/', [AccountController::class, 'store']);
+            Route::get('/{account}', [AccountController::class, 'show']);
+            Route::put('/{account}', [AccountController::class, 'update']);
+            Route::delete('/{account}', [AccountController::class, 'destroy']);
+        });
+
+        Route::prefix('/transaction-categories')->group(function () {
+            Route::get('/', [TransactionCategoryController::class, 'index']);
+            Route::post('/', [TransactionCategoryController::class, 'store']);
+            Route::get('/{transactionCategory}', [TransactionCategoryController::class, 'show']);
+            Route::put('/{transactionCategory}', [TransactionCategoryController::class, 'update']);
+            Route::delete('/{transactionCategory}', [TransactionCategoryController::class, 'destroy']);
+        });
+
+        Route::prefix('/transactions')->group(function () {
+            Route::get('/', [TransactionController::class, 'index']);
+            Route::post('/', [TransactionController::class, 'store']);
+            Route::get('/{transaction}', [TransactionController::class, 'show']);
+            Route::put('/{transaction}', [TransactionController::class, 'update']);
+            Route::delete('/{transaction}', [TransactionController::class, 'destroy']);
+        });
+    });
+
 });
