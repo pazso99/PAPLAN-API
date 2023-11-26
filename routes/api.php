@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Spending\AccountController;
 use App\Http\Controllers\Spending\TransactionCategoryController;
 use App\Http\Controllers\Spending\TransactionController;
@@ -48,4 +49,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
     });
 
+    Route::prefix('/dashboard')->group(function () {
+        Route::get('/spending-data', [DashboardController::class, 'getSpendingData']);
+    });
 });

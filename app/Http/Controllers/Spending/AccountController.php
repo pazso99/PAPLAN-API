@@ -9,7 +9,7 @@ use App\Http\Requests\Spending\AccountCreateRequest;
 use App\Http\Requests\Spending\AccountUpdateRequest;
 use Illuminate\Support\Str;
 
-class   AccountController extends Controller
+class AccountController extends Controller
 {
     /**
      * Get all accounts
