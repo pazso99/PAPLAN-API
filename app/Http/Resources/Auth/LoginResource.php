@@ -15,7 +15,6 @@ class LoginResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'user' => new UserResource($this),
             'token' => $this->createToken(fake()->uuid())->plainTextToken
         ];
     }

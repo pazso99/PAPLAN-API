@@ -38,8 +38,8 @@ class TransactionController extends Controller
             'meta' => $request->meta,
         ]);
 
-        $transaction->transactionCategory()->associate(Account::find($request->accountId));
-        $transaction->account()->associate(TransactionCategory::find($request->transactionCategoryId));
+        $transaction->transactionCategory()->associate(TransactionCategory::find($request->transactionCategoryId));
+        $transaction->account()->associate(Account::find($request->accountId));
 
         $transaction->save();
 
@@ -75,8 +75,8 @@ class TransactionController extends Controller
             'meta' => $request->meta,
         ]);
 
-        $transaction->transactionCategory()->associate(Account::find($request->accountId));
-        $transaction->account()->associate(TransactionCategory::find($request->transactionCategoryId));
+        $transaction->transactionCategory()->associate(TransactionCategory::find($request->transactionCategoryId));
+        $transaction->account()->associate(Account::find($request->accountId));
 
         $transaction->save();
 
