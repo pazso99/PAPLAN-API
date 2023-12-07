@@ -19,7 +19,7 @@ class AuthController extends Controller
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'message' => ['Incorrect credentials'],
-            ]);
+            ], 401);
         }
 
         $user->tokens()->delete();

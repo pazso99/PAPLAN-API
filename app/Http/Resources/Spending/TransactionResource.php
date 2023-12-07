@@ -30,7 +30,7 @@ class TransactionResource extends JsonResource
             'account' => [
                 'id' => $this->account->id,
                 'name' => $this->account->name,
-                'slug' => $this->transactionCategory->slug
+                'slug' => $this->account->slug
             ],
             'amount' => $this->amount,
             'createdAt' => $this->created_at,
