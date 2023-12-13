@@ -47,6 +47,14 @@ class CreateTransactions extends Command
                 $transactionCategories = [];
                 $row = 0;
 
+                /*
+                    1.                         accounts : account1, account2
+                    2.    transaction category (income) : income1, income2
+                    3.   transaction category (expense) : expense1, expense2, expense3
+                    4...                   transactions : 2023-01-01, income1, 10000, comment, account1
+                                                        : 2023-01-01, expense2, 5000, comment, account2
+                */
+
                 while (($data = fgetcsv($open, 1000, ',')) !== false) {
                     if ($row === 0) {
                         // 1. row: accounts
