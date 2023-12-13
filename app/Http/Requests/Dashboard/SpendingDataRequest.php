@@ -14,7 +14,8 @@ class SpendingDataRequest extends FormRequest
     public function rules()
     {
         return [
-            'date' => ['required', 'date'],
+            'year' => ['nullable', 'string'],
+            'month' => ['nullable', 'string'],
         ];
     }
 }

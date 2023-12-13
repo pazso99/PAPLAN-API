@@ -50,6 +50,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::prefix('/dashboard')->group(function () {
-        Route::get('/spending-data', [DashboardController::class, 'getSpendingData']);
+        Route::post('/spending-data', [DashboardController::class, 'getSpendingData']);
     });
 });
