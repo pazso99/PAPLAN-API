@@ -77,6 +77,30 @@ class TransactionController extends Controller
      */
     public function update(TransactionUpdateRequest $request, Transaction $transaction)
     {
+        // revert current account's balance
+        $type = $transaction->transactionCategory->transaction_type;
+
+        if ($type === 'expense') {
+            $transaction->account->balance += $transaction->amount;
+        } else if ($type === 'income') {
+            $transaction->account->balance -= $transaction->amount;
+        }
+
+        $transaction->account->save();
+
+        // change updated account's balance
+        $transactionCategory = TransactionCategory::find($request->transactionCategoryId);
+        $account = Account::find($request->accountId);
+
+        $transaction->transactionCategory()->associate($transactionCategory);
+        $transaction->account()->associate($account);
+
+        if ($transactionCategory->transaction_type === 'income') {
+            $account->balance += $request->amount;
+        } else if ($transactionCategory->transaction_type === 'expense') {
+            $account->balance -= $request->amount;
+        }
+
         $transaction->update([
             'status' => $request->status,
             'date' => $request->date,
@@ -85,9 +109,7 @@ class TransactionController extends Controller
             'meta' => $request->meta,
         ]);
 
-        $transaction->transactionCategory()->associate(TransactionCategory::find($request->transactionCategoryId));
-        $transaction->account()->associate(Account::find($request->accountId));
-
+        $account->save();
         $transaction->save();
 
         return TransactionResource::make($transaction);
@@ -101,6 +123,16 @@ class TransactionController extends Controller
      */
     public function destroy(Transaction $transaction)
     {
+        // revert account's balance
+        $type = $transaction->transactionCategory->transaction_type;
+
+        if ($type === 'expense') {
+            $transaction->account->balance += $transaction->amount;
+        } else if ($type === 'income') {
+            $transaction->account->balance -= $transaction->amount;
+        }
+
+        $transaction->account->save();
         $transaction->delete();
 
         return TransactionResource::make($transaction);
