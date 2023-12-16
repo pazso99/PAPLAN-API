@@ -75,7 +75,7 @@ class DashboardController extends Controller
             ];
         }
 
-        foreach (Account::where('status', 1)->get() as $account) {
+        foreach (Account::where('status', 1)->orderBy('id')->get() as $account) {
             $incomeTotal = $account->transactions()
                 ->whereYear('date', $request->year)
                 ->when($request->filled('month'), function ($query) use ($request) {
