@@ -48,24 +48,26 @@ class CreateTransactions extends Command
                 $row = 0;
 
                 /*
-                    1.                         accounts : account1, account2
-                    2.    transaction category (income) : income1, income2
-                    3.   transaction category (expense) : expense1, expense2, expense3
-                    4...                   transactions : 2023-01-01, income1, 10000, comment, account1
-                                                        : 2023-01-01, expense2, 5000, comment, account2
+                    1.                         accounts : account1:0,account2:10000
+                    2.    transaction category (income) : income1,income2
+                    3.   transaction category (expense) : expense1,expense2,expense3
+                    4...                   transactions : 2023-01-01,income1,10000,comment,account1
+                                                        : 2023-01-01,expense2,5000,comment,account2
                 */
 
                 while (($data = fgetcsv($open, 1000, ',')) !== false) {
                     if ($row === 0) {
                         // 1. row: accounts
                         foreach ($data as $account) {
+                            $accountInfo = explode(':', $account);
+
                             $generatedAccount = Account::create([
-                                'name' => $account,
-                                'slug' => Str::slug($account, '-'),
-                                'balance' => 0
+                                'name' => $accountInfo[0],
+                                'slug' => Str::slug($accountInfo[0], '-'),
+                                'balance' => $accountInfo[1]
                             ]);
 
-                            $accounts[$account] = $generatedAccount->id;
+                            $accounts[$accountInfo[0]] = $generatedAccount->id;
                         }
                     } else if ($row === 1) {
                         // 2. row: income transaction category

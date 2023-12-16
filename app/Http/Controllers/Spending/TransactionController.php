@@ -38,9 +38,19 @@ class TransactionController extends Controller
             'meta' => $request->meta,
         ]);
 
-        $transaction->transactionCategory()->associate(TransactionCategory::find($request->transactionCategoryId));
-        $transaction->account()->associate(Account::find($request->accountId));
+        $transactionCategory = TransactionCategory::find($request->transactionCategoryId);
+        $account = Account::find($request->accountId);
 
+        $transaction->transactionCategory()->associate($transactionCategory);
+        $transaction->account()->associate($account);
+
+        if ($transactionCategory->transaction_type === 'income') {
+            $account->balance += $request->amount;
+        } else if ($transactionCategory->transaction_type === 'expense') {
+            $account->balance -= $request->amount;
+        }
+
+        $account->save();
         $transaction->save();
 
 

@@ -6,15 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Dashboard\SpendingDataRequest;
 use App\Models\Spending\Account;
 use App\Models\Spending\Transaction;
+use App\Models\Spending\TransactionCategory;
 
 class DashboardController extends Controller
 {
-    // FIXME
     public function getSpendingData(SpendingDataRequest $request)
     {
         $accounts = [];
         $totals = [];
-        $categoryExpenses = [];
+        $categories = [];
         $totals = [
             'balance' => 0,
             'allIncome' => 0,
@@ -32,8 +32,10 @@ class DashboardController extends Controller
             ->with('transactionCategory')
             ->get();
 
+        $categoriesWithTransactions = [];
         $groupedTransactions = $transactions->groupBy('transactionCategory.id');
         foreach ($groupedTransactions as $categoryId => $categoryTransactions) {
+            $categoriesWithTransactions[] = $categoryId;
             $result = [
                 'category' => [
                     'id' => $categoryId,
@@ -58,7 +60,19 @@ class DashboardController extends Controller
                 $totals['premiumExpense'] += $result['amount'];
             }
 
-            $categoryExpenses[] = $result;
+            $categories[] = $result;
+        }
+
+        foreach (TransactionCategory::where('status', 1)->whereNotIn('id', $categoriesWithTransactions)->get() as $category) {
+            $categories[] = [
+                'category' => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'type' => $category->transaction_type,
+                ],
+                'amount' => 0,
+                'transactions' => []
+            ];
         }
 
         foreach (Account::where('status', 1)->get() as $account) {
@@ -84,6 +98,7 @@ class DashboardController extends Controller
 
             $profit = $incomeTotal - $expenseTotal;
             $accounts[] = [
+                'id' => $account->id,
                 'name' => $account->name,
                 'balance' => $account->balance,
                 'income' => $incomeTotal,
@@ -109,20 +124,20 @@ class DashboardController extends Controller
                     'type' => $transaction->transactionCategory->transaction_type,
                     'category' => $transaction->transactionCategory->name,
                     'comment' => $transaction->comment,
+                    'account' => $transaction->account->name,
+                    'date' => $transaction->date,
                 ],
                 'amount' => $transaction->amount,
             ];
         }
 
-        $data = [
-            'totals' => $totals,
-            'accounts' => $accounts,
-            'expenses' => $categoryExpenses,
-            'latestTransactions' => $latestTransactions
-        ];
-
         return [
-            "data" => $data
+            'data' => [
+                'totals' => $totals,
+                'accounts' => $accounts,
+                'categories' => collect($categories)->sortBy('category.id')->values()->all(),
+                'latestTransactions' => $latestTransactions
+            ]
         ];
     }
 }
