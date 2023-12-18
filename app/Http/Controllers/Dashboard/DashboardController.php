@@ -7,6 +7,7 @@ use App\Http\Requests\Dashboard\SpendingDataRequest;
 use App\Models\Spending\Account;
 use App\Models\Spending\Transaction;
 use App\Models\Spending\TransactionCategory;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -53,10 +54,13 @@ class DashboardController extends Controller
                 })->toArray()
             ];
 
-            if (in_array($result['category']['id'], explode(',', env('BASIC_EXPENSE_CATEGORIES')))) {
+            $basicExpenseCategories = json_decode(DB::table('config')->where('key', 'spending_basic_transaction_categories')->value('value'));
+            $premiumExpenseCategories = json_decode(DB::table('config')->where('key', 'spending_premium_transaction_categories')->value('value'));
+
+            if (in_array($result['category']['id'], $basicExpenseCategories)) {
                 $totals['basicExpense'] += $result['amount'];
             }
-            if (in_array($result['category']['id'], explode(',', env('PREMIUM_EXPENSE_CATEGORIES')))) {
+            if (in_array($result['category']['id'], $premiumExpenseCategories)) {
                 $totals['premiumExpense'] += $result['amount'];
             }
 
@@ -121,6 +125,7 @@ class DashboardController extends Controller
         foreach (Transaction::where('status', 1)->orderBy('date', 'desc')->take(12)->get() as $transaction) {
             $latestTransactions[] = [
                 'transaction' => [
+                    'id' => $transaction->id,
                     'type' => $transaction->transactionCategory->transaction_type,
                     'category' => $transaction->transactionCategory->name,
                     'comment' => $transaction->comment,
@@ -131,12 +136,22 @@ class DashboardController extends Controller
             ];
         }
 
+        $diagramData = [
+            'yearlyBalance' => DB::table('spending.actual_balances')
+                ->select(['date', 'amount'])
+                ->where('date', 'like', "$request->year%")
+                ->orderBy('date')
+                ->get()
+        ];
+
+
         return [
             'data' => [
                 'totals' => $totals,
                 'accounts' => $accounts,
                 'categories' => collect($categories)->sortBy('category.id')->values()->all(),
-                'latestTransactions' => $latestTransactions
+                'latestTransactions' => $latestTransactions,
+                'diagrams' => $diagramData,
             ]
         ];
     }

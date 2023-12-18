@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Config\ConfigController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Spending\AccountController;
 use App\Http\Controllers\Spending\TransactionCategoryController;
@@ -47,6 +48,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::put('/{transaction}', [TransactionController::class, 'update']);
             Route::delete('/{transaction}', [TransactionController::class, 'destroy']);
         });
+
+        Route::get('/actual-balances', [ConfigController::class, 'getSpendingActualBalances']);
+        Route::get('/settings', [ConfigController::class, 'getSpendingSettings']);
+        Route::post('/settings', [ConfigController::class, 'updateSpendingSettings']);
     });
 
     Route::prefix('/dashboard')->group(function () {
