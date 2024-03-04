@@ -25,12 +25,13 @@ class TransactionResource extends JsonResource
             'transactionCategory' => [
                 'id' => $this->transactionCategory->id,
                 'name' => $this->transactionCategory->name,
-                'slug' => $this->transactionCategory->slug
+                'slug' => $this->transactionCategory->slug,
             ],
             'account' => [
                 'id' => $this->account->id,
                 'name' => $this->account->name,
-                'slug' => $this->account->slug
+                'slug' => $this->account->slug,
+                'balance' => $this->account->balance,
             ],
             'amount' => $this->amount,
             'createdAt' => $this->created_at,
