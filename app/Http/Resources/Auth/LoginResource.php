@@ -15,7 +15,9 @@ class LoginResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'token' => $this->createToken(fake()->uuid())->plainTextToken
+            'token' => $this->createToken(
+                substr(str_shuffle('abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRTUVWXYZ2346789'), 0, 6)
+            )->plainTextToken
         ];
     }
 }
