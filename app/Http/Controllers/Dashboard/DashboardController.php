@@ -122,7 +122,7 @@ class DashboardController extends Controller
         }
 
         $latestTransactions = [];
-        foreach (Transaction::where('status', 1)->orderBy('date', 'desc')->take(12)->get() as $transaction) {
+        foreach (Transaction::where('status', 1)->orderBy('date', 'desc')->orderBy('id', 'desc')->take(12)->get() as $transaction) {
             $latestTransactions[] = [
                 'transaction' => [
                     'id' => $transaction->id,
