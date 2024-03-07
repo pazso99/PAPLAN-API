@@ -7,7 +7,6 @@ use App\Http\Requests\Recipes\RecipeCreateRequest;
 use App\Http\Requests\Recipes\RecipeUpdateRequest;
 use App\Http\Resources\Recipes\RecipeResource;
 use App\Models\Recipes\Recipe;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class RecipeController extends Controller
@@ -65,6 +64,7 @@ class RecipeController extends Controller
     public function update(RecipeUpdateRequest $request, Recipe $recipe)
     {
         $recipe->update([
+            'status' => $request->status,
             'name' => $request->name,
             'slug' => Str::slug($request->name, '-'),
             'difficulty' => $request->difficulty,
