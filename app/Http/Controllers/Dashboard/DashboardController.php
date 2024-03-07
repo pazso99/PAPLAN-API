@@ -13,31 +13,37 @@ class DashboardController extends Controller
 {
     public function getSpendingData(SpendingDataRequest $request)
     {
-        $accounts = [];
-        $totals = [];
-        $categories = [];
         $totals = [
             'balance' => 0,
-            'allIncome' => 0,
-            'allExpense' => 0,
+            'income' => 0,
+            'expense' => 0,
             'profit' => 0,
             'basicExpense' => 0,
             'premiumExpense' => 0,
         ];
 
-        $transactions = Transaction::where('status', 1)
-            ->whereYear('date', $request->year)
-            ->when($request->filled('month'), function ($query) use ($request) {
-                return $query->whereMonth('date', $request->month);
-            })
-            ->with('transactionCategory')
-            ->get();
-
-        $categoriesWithTransactions = [];
-        $groupedTransactions = $transactions->groupBy('transactionCategory.id');
-        foreach ($groupedTransactions as $categoryId => $categoryTransactions) {
-            $categoriesWithTransactions[] = $categoryId;
-            $result = [
+        // Getting transactions info by categories in the selected date
+        $transactionDataByCategories = [];
+        $categoryIds = [];
+        $basicExpenseCategories = json_decode(
+            DB::table('config')->where('key', 'spending_basic_transaction_categories')->value('value')
+        );
+        $premiumExpenseCategories = json_decode(
+            DB::table('config')->where('key', 'spending_premium_transaction_categories')->value('value')
+        );
+        foreach (
+            Transaction
+                ::active()
+                ->whereYear('date', $request->year)
+                ->when($request->filled('month'), function ($query) use ($request) {
+                    return $query->whereMonth('date', $request->month);
+                })
+                ->with('transactionCategory')
+                ->get()
+                ->groupBy('transactionCategory.id')
+            as $categoryId => $categoryTransactions
+        ) {
+            $categoryData = [
                 'category' => [
                     'id' => $categoryId,
                     'name' => $categoryTransactions->first()->transactionCategory->name,
@@ -54,21 +60,26 @@ class DashboardController extends Controller
                 })->toArray()
             ];
 
-            $basicExpenseCategories = json_decode(DB::table('config')->where('key', 'spending_basic_transaction_categories')->value('value'));
-            $premiumExpenseCategories = json_decode(DB::table('config')->where('key', 'spending_premium_transaction_categories')->value('value'));
-
-            if (in_array($result['category']['id'], $basicExpenseCategories)) {
-                $totals['basicExpense'] += $result['amount'];
+            if (in_array($categoryData['category']['id'], $basicExpenseCategories)) {
+                $totals['basicExpense'] += $categoryData['amount'];
             }
-            if (in_array($result['category']['id'], $premiumExpenseCategories)) {
-                $totals['premiumExpense'] += $result['amount'];
+            if (in_array($categoryData['category']['id'], $premiumExpenseCategories)) {
+                $totals['premiumExpense'] += $categoryData['amount'];
             }
 
-            $categories[] = $result;
-        }
+            $transactionDataByCategories[] = $categoryData;
+            $categoryIds[] = $categoryId;
+        };
 
-        foreach (TransactionCategory::where('status', 1)->whereNotIn('id', $categoriesWithTransactions)->get() as $category) {
-            $categories[] = [
+        // Fill array with categories without transactions
+        foreach (
+            TransactionCategory
+                ::active()
+                ->whereNotIn('id', $categoryIds)
+                ->get()
+            as $category
+        ) {
+            $transactionDataByCategories[] = [
                 'category' => [
                     'id' => $category->id,
                     'name' => $category->name,
@@ -77,10 +88,20 @@ class DashboardController extends Controller
                 'amount' => 0,
                 'transactions' => []
             ];
-        }
+        };
 
-        foreach (Account::where('status', 1)->orderBy('id')->get() as $account) {
-            $incomeTotal = $account->transactions()
+        // Getting account balance infos
+        $transactionDataByAccounts = [];
+        foreach (
+            Account
+                ::active()
+                ->orderBy('id')
+                ->get()
+            as $account
+        ) {
+            $totalIncome = $account
+                ->transactions()
+                ->active()
                 ->whereYear('date', $request->year)
                 ->when($request->filled('month'), function ($query) use ($request) {
                     return $query->whereMonth('date', $request->month);
@@ -90,39 +111,78 @@ class DashboardController extends Controller
                 })
                 ->sum('amount');
 
-            $expenseTotal = $account->transactions()
+            $incomeFromTransfers = Transaction
+                ::active()
                 ->whereYear('date', $request->year)
                 ->when($request->filled('month'), function ($query) use ($request) {
                     return $query->whereMonth('date', $request->month);
                 })
                 ->whereHas('transactionCategory', function ($query) {
-                    $query->where('transaction_type', 'expense');
+                    $query->where('transaction_type', 'transfer');
+                })
+                ->whereJsonContains('meta->toAccountId', $account->id)
+                ->sum('amount');
+
+            $totalExpense = $account
+                ->transactions()
+                ->active()
+                ->whereYear('date', $request->year)
+                ->when($request->filled('month'), function ($query) use ($request) {
+                    return $query->whereMonth('date', $request->month);
+                })
+                ->whereHas('transactionCategory', function ($query) {
+                    $query
+                        ->where('transaction_type', 'expense');
                 })
                 ->sum('amount');
 
-            $profit = $incomeTotal - $expenseTotal;
-            $accounts[] = [
+            $expenseFromTransfers = $account
+                ->transactions()
+                ->active()
+                ->whereYear('date', $request->year)
+                ->when($request->filled('month'), function ($query) use ($request) {
+                    return $query->whereMonth('date', $request->month);
+                })
+                ->whereHas('transactionCategory', function ($query) {
+                    $query
+                        ->where('transaction_type', 'transfer');
+                })
+                ->sum('amount');
+
+            $profit = $totalIncome - $totalExpense;
+
+            $totals['balance'] += $account->balance;
+            $totals['income'] += $totalIncome;
+            $totals['expense'] += $totalExpense;
+            $totals['profit'] += $profit;
+
+            $totalIncome += $incomeFromTransfers;
+            $totalExpense += $expenseFromTransfers;
+            $profit = $totalIncome - $totalExpense;
+            $transactionDataByAccounts[] = [
                 'id' => $account->id,
                 'name' => $account->name,
                 'balance' => $account->balance,
-                'income' => $incomeTotal,
-                'expense' => $expenseTotal,
+                'income' => $totalIncome,
+                'expense' => $totalExpense,
                 'profit' => $profit,
             ];
-        }
+        };
 
-        foreach ($accounts as $account) {
-            $totals['balance'] += $account['balance'];
-
-            $totals['allIncome'] += $account['income'];
-            $totals['allExpense'] += $account['expense'];
-
-            $profit = $account['income'] - $account['expense'];
-            $totals['profit'] += $profit;
-        }
-
+        // Getting latest transactions
         $latestTransactions = [];
-        foreach (Transaction::where('status', 1)->orderBy('date', 'desc')->orderBy('id', 'desc')->take(12)->get() as $transaction) {
+        foreach (
+            Transaction
+                ::active()
+                ->whereHas('transactionCategory', function ($query) {
+                    $query->where('transaction_type', '!=', 'transfer');
+                })
+                ->orderBy('date', 'desc')
+                ->orderBy('id', 'desc')
+                ->take(12)
+                ->get()
+            as $transaction
+        ) {
             $latestTransactions[] = [
                 'transaction' => [
                     'id' => $transaction->id,
@@ -134,8 +194,9 @@ class DashboardController extends Controller
                 ],
                 'amount' => $transaction->amount,
             ];
-        }
+        };
 
+        // Getting diagram data
         $diagramData = [
             'yearlyBalance' => DB::table('spending.actual_balances')
                 ->select(['date', 'amount'])
@@ -144,12 +205,11 @@ class DashboardController extends Controller
                 ->get()
         ];
 
-
         return [
             'data' => [
                 'totals' => $totals,
-                'accounts' => $accounts,
-                'categories' => collect($categories)->sortBy('category.id')->values()->all(),
+                'accounts' => $transactionDataByAccounts,
+                'categories' => collect($transactionDataByCategories)->sortBy('category.id')->values()->all(),
                 'latestTransactions' => $latestTransactions,
                 'diagrams' => $diagramData,
             ]

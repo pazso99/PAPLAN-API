@@ -12,6 +12,11 @@ class Transaction extends Model
     protected $table = 'spending.transactions';
     protected $fillable = ['status', 'date', 'amount', 'account_id', 'transaction_category_id', 'comment', 'meta'];
 
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
+
     public function transactionCategory()
     {
         return $this->belongsTo(TransactionCategory::class);
