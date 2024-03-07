@@ -12,6 +12,11 @@ class Account extends Model
     protected $table = 'spending.accounts';
     protected $fillable = ['status', 'name', 'slug', 'balance'];
 
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
+
     public function transactions()
     {
         return $this->hasMany(Transaction::class);

@@ -44,10 +44,23 @@ class TransactionController extends Controller
         $transaction->transactionCategory()->associate($transactionCategory);
         $transaction->account()->associate($account);
 
-        if ($transactionCategory->transaction_type === 'income') {
+        if ($request->status && $transactionCategory->transaction_type === 'income') {
             $account->balance += $request->amount;
-        } else if ($transactionCategory->transaction_type === 'expense') {
+        } else if ($request->status && $transactionCategory->transaction_type === 'expense') {
             $account->balance -= $request->amount;
+        }
+
+        if ($request->meta !== '{}') {
+            $meta = json_decode($request->meta);
+
+            if ($request->status && $transactionCategory->transaction_type === 'transfer') {
+                $toAccount = Account::find($meta->toAccountId);
+
+                $account->balance -= $request->amount;
+                $toAccount->balance += $request->amount;
+
+                $toAccount->save();
+            }
         }
 
         $account->save();
@@ -80,10 +93,25 @@ class TransactionController extends Controller
         // revert current account's balance
         $type = $transaction->transactionCategory->transaction_type;
 
-        if ($type === 'expense') {
-            $transaction->account->balance += $transaction->amount;
-        } else if ($type === 'income') {
-            $transaction->account->balance -= $transaction->amount;
+        if ($transaction->status) {
+            if ($type === 'income') {
+                $transaction->account->balance -= $transaction->amount;
+            } else if ($type === 'expense') {
+                $transaction->account->balance += $transaction->amount;
+            }
+
+            if ($transaction->meta !== '{}') {
+                $meta = json_decode($transaction->meta);
+
+                if ($type === 'transfer') {
+                    $toAccount = Account::find($meta->toAccountId);
+
+                    $transaction->account->balance += $transaction->amount;
+                    $toAccount->balance -= $transaction->amount;
+
+                    $toAccount->save();
+                }
+            }
         }
 
         $transaction->account->save();
@@ -95,10 +123,23 @@ class TransactionController extends Controller
         $transaction->transactionCategory()->associate($transactionCategory);
         $transaction->account()->associate($account);
 
-        if ($transactionCategory->transaction_type === 'income') {
+        if ($request->status && $transactionCategory->transaction_type === 'income') {
             $account->balance += $request->amount;
-        } else if ($transactionCategory->transaction_type === 'expense') {
+        } else if ($request->status && $transactionCategory->transaction_type === 'expense') {
             $account->balance -= $request->amount;
+        }
+
+        if ($request->meta !== '{}') {
+            $meta = json_decode($request->meta);
+
+            if ($request->status && $transactionCategory->transaction_type === 'transfer') {
+                $toAccount = Account::find($meta->toAccountId);
+
+                $account->balance -= $request->amount;
+                $toAccount->balance += $request->amount;
+
+                $toAccount->save();
+            }
         }
 
         $transaction->update([
@@ -126,10 +167,23 @@ class TransactionController extends Controller
         // revert account's balance
         $type = $transaction->transactionCategory->transaction_type;
 
-        if ($type === 'expense') {
+        if ($transaction->status && $type === 'expense') {
             $transaction->account->balance += $transaction->amount;
-        } else if ($type === 'income') {
+        } else if ($transaction->status && $type === 'income') {
             $transaction->account->balance -= $transaction->amount;
+        }
+
+        if ($transaction->meta !== '{}') {
+            $meta = json_decode($transaction->meta);
+
+            if ($transaction->status && $type === 'transfer') {
+                $toAccount = Account::find($meta->toAccountId);
+
+                $transaction->account->balance += $transaction->amount;
+                $toAccount->balance -= $transaction->amount;
+
+                $toAccount->save();
+            }
         }
 
         $transaction->account->save();
