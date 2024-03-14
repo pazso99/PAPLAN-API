@@ -24,7 +24,7 @@ class DashboardController extends Controller
 
         // Getting transactions info by categories in the selected date
         $transactionDataByCategories = [];
-        $categoryIds = [];
+        $categoryIdsWithTransaction = [];
         $basicExpenseCategories = json_decode(
             DB::table('config')->where('key', 'spending_basic_transaction_categories')->value('value')
         );
@@ -44,49 +44,47 @@ class DashboardController extends Controller
             as $categoryId => $categoryTransactions
         ) {
             $categoryData = [
-                'category' => [
-                    'id' => $categoryId,
-                    'name' => $categoryTransactions->first()->transactionCategory->name,
-                    'type' => $categoryTransactions->first()->transactionCategory->transaction_type,
-                ],
-                'amount' => $categoryTransactions->sum('amount'),
-                'transactions' => $categoryTransactions->map(function ($transaction) {
-                    return [
-                        'date' => $transaction->date,
-                        'amount' => $transaction->amount,
-                        'comment' => $transaction->comment,
-                        'account' => $transaction->account->name,
-                    ];
-                })->toArray()
+                'id' => $categoryId,
+                'name' => $categoryTransactions->first()->transactionCategory->name,
+                'type' => $categoryTransactions->first()->transactionCategory->transaction_type,
+                'sumTransactionAmount' => $categoryTransactions->sum('amount'),
+                // 'transactions' => $categoryTransactions->map(function ($transaction) { // kell ez ide később talán
+                //     return [
+                //         'id' => $transaction->id,
+                //         'date' => $transaction->date,
+                //         'amount' => $transaction->amount,
+                //         'comment' => $transaction->comment,
+                //         'account' => $transaction->account->name,
+                //         'meta' => $transaction->meta,
+                //     ];
+                // })->toArray()
             ];
 
-            if (in_array($categoryData['category']['id'], $basicExpenseCategories)) {
-                $totals['basicExpense'] += $categoryData['amount'];
+            if (in_array($categoryData['id'], $basicExpenseCategories)) {
+                $totals['basicExpense'] += $categoryData['sumTransactionAmount'];
             }
-            if (in_array($categoryData['category']['id'], $premiumExpenseCategories)) {
-                $totals['premiumExpense'] += $categoryData['amount'];
+            if (in_array($categoryData['id'], $premiumExpenseCategories)) {
+                $totals['premiumExpense'] += $categoryData['sumTransactionAmount'];
             }
 
             $transactionDataByCategories[] = $categoryData;
-            $categoryIds[] = $categoryId;
+            $categoryIdsWithTransaction[] = $categoryId;
         };
 
         // Fill array with categories without transactions
         foreach (
             TransactionCategory
                 ::active()
-                ->whereNotIn('id', $categoryIds)
+                ->whereNotIn('id', $categoryIdsWithTransaction)
                 ->get()
             as $category
         ) {
             $transactionDataByCategories[] = [
-                'category' => [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'type' => $category->transaction_type,
-                ],
-                'amount' => 0,
-                'transactions' => []
+                'id' => $category->id,
+                'name' => $category->name,
+                'type' => $category->transaction_type,
+                'sumTransactionAmount' => 0,
+                // 'transactions' => []
             ];
         };
 
@@ -184,15 +182,21 @@ class DashboardController extends Controller
             as $transaction
         ) {
             $latestTransactions[] = [
-                'transaction' => [
-                    'id' => $transaction->id,
-                    'type' => $transaction->transactionCategory->transaction_type,
-                    'category' => $transaction->transactionCategory->name,
-                    'comment' => $transaction->comment,
-                    'account' => $transaction->account->name,
-                    'date' => $transaction->date,
-                ],
+                'id' => $transaction->id,
+                'date' => $transaction->date,
                 'amount' => $transaction->amount,
+                'transactionCategory' => [
+                    'id' => $transaction->transactionCategory->id,
+                    'name' => $transaction->transactionCategory->name,
+                    'transactionType' => $transaction->transactionCategory->transactionType,
+                ],
+                'account' => [
+                    'id' => $transaction->account->id,
+                    'name' => $transaction->account->name,
+                    'balance' => $transaction->account->balance,
+                ],
+                'comment' => $transaction->comment,
+                'meta' => $transaction->meta,
             ];
         };
 
@@ -209,7 +213,7 @@ class DashboardController extends Controller
             'data' => [
                 'totals' => $totals,
                 'accounts' => $transactionDataByAccounts,
-                'categories' => collect($transactionDataByCategories)->sortBy('category.id')->values()->all(),
+                'categories' => collect($transactionDataByCategories)->sortBy('id')->values()->all(),
                 'latestTransactions' => $latestTransactions,
                 'diagrams' => $diagramData,
             ]

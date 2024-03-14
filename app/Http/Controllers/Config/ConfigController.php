@@ -30,17 +30,9 @@ class ConfigController extends Controller
             ->collapse()
             ->toArray();
 
-        $expenseCategories = TransactionCategory::where([['status', 1], ['transaction_type', 'expense']])->get()->map(function ($category) {
-            return [
-                'name' => $category->name,
-                'id' => $category->id,
-            ];
-        })->toArray();
-
         return [
             'data' => [
                 'configs' => $spendingConfigs,
-                'expenseCategories' => $expenseCategories,
             ]
         ];
     }
@@ -55,6 +47,6 @@ class ConfigController extends Controller
             DB::table('spending.actual_balances')->where('date', $date)->update(['amount' => $value]);
         }
 
-        return response()->json(['message' => 'Config values updated successfully']);
+        return $this->getSpendingSettings();
     }
 }
