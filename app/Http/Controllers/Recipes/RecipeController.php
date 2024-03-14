@@ -33,11 +33,8 @@ class RecipeController extends Controller
             'status' => $request->status,
             'name' => $request->name,
             'slug' => Str::slug($request->name, '-'),
-            'difficulty' => $request->difficulty,
             'time' => $request->time,
-            'portion' => $request->portion,
-            'ingredients' => $request->ingredients,
-            'instructions' => $request->instructions,
+            'description' => $request->description,
         ]);
 
         return RecipeResource::make($recipe);
@@ -67,11 +64,8 @@ class RecipeController extends Controller
             'status' => $request->status,
             'name' => $request->name,
             'slug' => Str::slug($request->name, '-'),
-            'difficulty' => $request->difficulty,
             'time' => $request->time,
-            'portion' => $request->portion,
-            'ingredients' => $request->ingredients,
-            'instructions' => $request->instructions,
+            'description' => $request->description,
         ]);
 
         return RecipeResource::make($recipe);

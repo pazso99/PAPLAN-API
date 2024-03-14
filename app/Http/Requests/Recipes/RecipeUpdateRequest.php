@@ -16,11 +16,8 @@ class RecipeUpdateRequest extends FormRequest
         return [
             'status' => ['required', 'boolean'],
             'name' => ['required', 'string'],
-            'difficulty' => ['required', 'integer'],
             'time' => ['nullable', 'string'],
-            'portion' => ['nullable', 'string'],
-            'ingredients' => ['required', 'string'],
-            'instructions' => ['required', 'string'],
+            'description' => ['nullable', 'string'],
         ];
     }
 }

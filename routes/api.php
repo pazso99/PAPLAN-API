@@ -57,6 +57,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('/dashboard')->group(function () {
         Route::post('/spending-data', [DashboardController::class, 'getSpendingData']);
+        Route::get('/recipes-data', [DashboardController::class, 'getRecipesData']);
     });
 
     Route::prefix('/recipes')->group(function () {

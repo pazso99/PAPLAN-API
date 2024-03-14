@@ -10,5 +10,10 @@ class Recipe extends Model
     use HasFactory;
 
     protected $table = 'recipes.recipes';
-    protected $fillable = ['status', 'name', 'slug', 'difficulty', 'time', 'portion', 'ingredients', 'instructions'];
+    protected $fillable = ['status', 'name', 'slug', 'description', 'time'];
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
 }

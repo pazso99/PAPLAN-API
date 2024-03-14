@@ -4,6 +4,7 @@ namespace App\Http\Resources\Recipes;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 class RecipeResource extends JsonResource
 {
@@ -20,11 +21,8 @@ class RecipeResource extends JsonResource
             'status' => $this->status,
             'name' => $this->name,
             'slug' => $this->slug,
-            'difficulty' => $this->difficulty,
             'time' => $this->time,
-            'portion' => $this->portion,
-            'ingredients' => $this->ingredients,
-            'instructions' => $this->instructions,
+            'description' => $this->description,
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
         ];

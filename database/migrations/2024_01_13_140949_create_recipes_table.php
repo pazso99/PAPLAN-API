@@ -16,11 +16,8 @@ return new class extends Migration
             $table->boolean('status')->default(true);
             $table->string('name');
             $table->string('slug')->unique();
-            $table->string('portion')->nullable();
-            $table->integer('difficulty')->default(0);
             $table->string('time')->nullable();
-            $table->text('ingredients');
-            $table->text('instructions');
+            $table->string('description', '65535')->nullable();
             $table->timestamps();
         });
     }
