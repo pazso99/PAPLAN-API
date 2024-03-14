@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Config\ConfigController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Recipes\RecipeController;
 use App\Http\Controllers\Spending\AccountController;
 use App\Http\Controllers\Spending\TransactionCategoryController;
 use App\Http\Controllers\Spending\TransactionController;
@@ -56,5 +57,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('/dashboard')->group(function () {
         Route::post('/spending-data', [DashboardController::class, 'getSpendingData']);
+        Route::get('/recipes-data', [DashboardController::class, 'getRecipesData']);
+    });
+
+    Route::prefix('/recipes')->group(function () {
+        Route::prefix('/recipes')->group(function () {
+            Route::get('/', [RecipeController::class, 'index']);
+            Route::post('/', [RecipeController::class, 'store']);
+            Route::get('/{recipe}', [RecipeController::class, 'show']);
+            Route::put('/{recipe}', [RecipeController::class, 'update']);
+            Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
+        });
     });
 });
