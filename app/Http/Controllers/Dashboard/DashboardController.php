@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Dashboard\SpendingDataRequest;
+use App\Models\Recipes\Recipe;
 use App\Models\Spending\Account;
 use App\Models\Spending\Transaction;
 use App\Models\Spending\TransactionCategory;
@@ -216,6 +217,15 @@ class DashboardController extends Controller
                 'categories' => collect($transactionDataByCategories)->sortBy('id')->values()->all(),
                 'latestTransactions' => $latestTransactions,
                 'diagrams' => $diagramData,
+            ]
+        ];
+    }
+
+    public function getRecipesData()
+    {
+        return [
+            'data' => [
+                'recipes' => Recipe::active()->get(['id', 'name', 'time', 'description']),
             ]
         ];
     }
