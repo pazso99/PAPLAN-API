@@ -4,26 +4,23 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Config\ConfigController;
 use App\Http\Controllers\Dashboard\DashboardController;
-use App\Http\Controllers\Recipes\RecipeController;
 use App\Http\Controllers\Spending\AccountController;
 use App\Http\Controllers\Spending\TransactionCategoryController;
 use App\Http\Controllers\Spending\TransactionController;
+use App\Http\Controllers\Recipes\RecipeController;
+use App\Http\Controllers\Notes\NoteController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,2');
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'getUser']);
+
+    Route::prefix('/dashboard')->group(function () {
+        Route::post('/spending-data', [DashboardController::class, 'getSpendingData']);
+        Route::get('/recipes-data', [DashboardController::class, 'getRecipesData']);
+        Route::get('/notes-data', [DashboardController::class, 'getNotesData']);
+    });
 
     Route::prefix('/spending')->group(function () {
         Route::prefix('/accounts')->group(function () {
@@ -55,11 +52,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/settings', [ConfigController::class, 'updateSpendingSettings']);
     });
 
-    Route::prefix('/dashboard')->group(function () {
-        Route::post('/spending-data', [DashboardController::class, 'getSpendingData']);
-        Route::get('/recipes-data', [DashboardController::class, 'getRecipesData']);
-    });
-
     Route::prefix('/recipes')->group(function () {
         Route::prefix('/recipes')->group(function () {
             Route::get('/', [RecipeController::class, 'index']);
@@ -67,6 +59,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/{recipe}', [RecipeController::class, 'show']);
             Route::put('/{recipe}', [RecipeController::class, 'update']);
             Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
+        });
+    });
+
+    Route::prefix('/notes')->group(function () {
+        Route::prefix('/notes')->group(function () {
+            Route::get('/', [NoteController::class, 'index']);
+            Route::post('/', [NoteController::class, 'store']);
+            Route::get('/{note}', [NoteController::class, 'show']);
+            Route::put('/{note}', [NoteController::class, 'update']);
+            Route::delete('/{note}', [NoteController::class, 'destroy']);
         });
     });
 });

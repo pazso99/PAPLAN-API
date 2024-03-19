@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use App\Http\Requests\Dashboard\SpendingDataRequest;
-use App\Models\Recipes\Recipe;
 use App\Models\Spending\Account;
 use App\Models\Spending\Transaction;
 use App\Models\Spending\TransactionCategory;
-use Illuminate\Support\Facades\DB;
+use App\Models\Recipes\Recipe;
+use App\Models\Notes\Note;
 
 class DashboardController extends Controller
 {
@@ -225,7 +226,38 @@ class DashboardController extends Controller
     {
         return [
             'data' => [
-                'recipes' => Recipe::active()->get(['id', 'name', 'time', 'description']),
+                'recipes' => Recipe::active()->get([
+                    'id',
+                    'name',
+                    'time',
+                    'description'
+                ]),
+            ]
+        ];
+    }
+
+    public function getNotesData()
+    {
+        return [
+            'data' => [
+                'notes' => Note::active()->select(
+                    'id',
+                    'name',
+                    'due_date AS dueDate',
+                    'priority',
+                    'description'
+                )
+                ->orderByRaw("
+                    CASE
+                        WHEN priority = 'critical' THEN 1
+                        WHEN priority = 'high' THEN 2
+                        WHEN priority = 'medium' THEN 3
+                        WHEN priority = 'low' THEN 4
+                        WHEN priority = 'none' THEN 5
+                        ELSE 6
+                    END
+                ")
+                ->get(),
             ]
         ];
     }
