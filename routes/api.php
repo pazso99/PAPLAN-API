@@ -4,6 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Config\ConfigController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Inventory\ItemController;
+use App\Http\Controllers\Inventory\ItemTypeController;
+use App\Http\Controllers\Inventory\PackageUnitController;
+use App\Http\Controllers\Inventory\PurchasedItemController;
 use App\Http\Controllers\Spending\AccountController;
 use App\Http\Controllers\Spending\TransactionCategoryController;
 use App\Http\Controllers\Spending\TransactionController;
@@ -69,6 +73,45 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/{note}', [NoteController::class, 'show']);
             Route::put('/{note}', [NoteController::class, 'update']);
             Route::delete('/{note}', [NoteController::class, 'destroy']);
+        });
+    });
+
+
+    Route::prefix('inventory')->group(function () {
+        Route::prefix('/package-units')->group(function () {
+            Route::get('/', [PackageUnitController::class, 'index']);
+            Route::post('/', [PackageUnitController::class, 'store']);
+            Route::get('/{packageUnit}', [PackageUnitController::class, 'show']);
+            Route::put('/{packageUnit}', [PackageUnitController::class, 'update']);
+            Route::delete('/{packageUnit}', [PackageUnitController::class, 'destroy']);
+        });
+
+        Route::prefix('/item-types')->group(function () {
+            Route::get('/', [ItemTypeController::class, 'index']);
+            Route::post('/', [ItemTypeController::class, 'store']);
+            Route::get('/{itemType}', [ItemTypeController::class, 'show']);
+            Route::put('/{itemType}', [ItemTypeController::class, 'update']);
+            Route::delete('/{itemType}', [ItemTypeController::class, 'destroy']);
+        });
+
+        Route::prefix('/items')->group(function () {
+            Route::get('/', [ItemController::class, 'index']);
+            Route::post('/', [ItemController::class, 'store']);
+            Route::get('/{item}', [ItemController::class, 'show']);
+            Route::put('/{item}', [ItemController::class, 'update']);
+            Route::delete('/{item}', [ItemController::class, 'destroy']);
+        });
+
+        Route::prefix('/purchased-items')->group(function () {
+            // Route::get('/get-stock-categories', [PurchasedItemController::class, 'getStockCategories']);
+            // Route::get('/get-stock-items/{category}', [PurchasedItemController::class, 'getStockItemsByCategory']);
+            // Route::get('/get-stock-item/{category}/{item}', [PurchasedItemController::class, 'getStockItem']);
+
+            Route::get('/', [PurchasedItemController::class, 'index']);
+            Route::post('/', [PurchasedItemController::class, 'store']);
+            Route::get('/{purchasedItem}', [PurchasedItemController::class, 'show']);
+            Route::put('/{purchasedItem}', [PurchasedItemController::class, 'update']);
+            Route::delete('/{purchasedItem}', [PurchasedItemController::class, 'destroy']);
         });
     });
 });
