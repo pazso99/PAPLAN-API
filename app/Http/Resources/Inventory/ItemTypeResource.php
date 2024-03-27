@@ -20,7 +20,6 @@ class ItemTypeResource extends JsonResource
             'status' => $this->status,
             'name' => $this->name,
             'slug' => $this->slug,
-            'items' => ItemResource::collection($this->items),
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
         ];
