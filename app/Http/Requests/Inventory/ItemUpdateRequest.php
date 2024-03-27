@@ -17,7 +17,7 @@ class ItemUpdateRequest extends FormRequest
             'status' => ['required', 'boolean'],
             'name' => ['required', 'string'],
             'itemTypeId' => ['required', 'integer', 'exists:App\Models\Inventory\ItemType,id'],
-            'packageUnitIds' => ['required', 'array'],
+            'packageUnitIds' => ['nullable', 'array'],
             'packageUnitIds.*' => ['exists:App\Models\Inventory\PackageUnit,id'],
             'expectedLifetimeInDays' => ['nullable', 'integer', 'min:0'],
             'recommendedStock' => ['nullable', 'integer', 'min:0'],

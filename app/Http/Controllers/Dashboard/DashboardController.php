@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\Dashboard\SpendingDataRequest;
+use App\Models\Inventory\ItemType;
 use App\Models\Spending\Account;
 use App\Models\Spending\Transaction;
 use App\Models\Spending\TransactionCategory;
@@ -260,5 +261,135 @@ class DashboardController extends Controller
                 ->get(),
             ]
         ];
+    }
+
+    public function getInventoryData()
+    {
+        $inventoryItemTypes = [];
+
+        foreach (ItemType::active()->get() as $itemType) {
+            $items = [];
+            $outOfStockNumber = 0;
+            $inStockNumber = 0;
+
+            foreach ($itemType->items()->active()->get() as $item) {
+                $inStockItems = $this->getStructuredPurchasedItems(
+                    $item->purchasedItems()
+                        ->active()
+                        ->inStock()
+                        ->orderBy('expiration_date')
+                        ->get()
+                );
+                $usedItems = $this->getStructuredPurchasedItems(
+                    $item->purchasedItems()
+                        ->active()
+                        ->outStock()
+                        ->get()
+                );
+
+                $inStockCount = count($inStockItems);
+                $usedItemsCount = count($usedItems);
+                $stockStatus = $inStockCount > 0 ? 'in_stock' : 'out';
+                $expectedRunOutDate = $inStockItems[0]['expirationDate'] ?? null;
+                $ranOutDate = null;
+                $isEssential = $item->is_essential;
+
+                if (
+                    $stockStatus === 'in_stock' &&
+                    $item->recommended_stock &&
+                    $inStockCount < $item->recommended_stock
+                ) {
+                    $stockStatus = 'running_out';
+                }
+
+                if (
+                    $stockStatus === 'out' &&
+                    $usedItemsCount > 0
+                ) {
+                    $ranOutDate = $usedItems[0]['expirationDate'];
+                }
+
+                if ($isEssential && $stockStatus === 'out') {
+                    $outOfStockNumber++;
+                }
+                if ($stockStatus !== 'out') {
+                    $inStockNumber++;
+                }
+
+                $items[] = [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'recommendedStock' => $item->recommended_stock,
+                    'isEssential' => $isEssential,
+                    'stockStatus' => $stockStatus,
+                    'ranOutDate' => $ranOutDate,
+                    'expectedRunOutDate' => $expectedRunOutDate,
+                    'inStockItems' => $inStockItems,
+                    'usedItems' => $usedItems,
+                ];
+            }
+
+            $inventoryItemTypes[] = [
+                'id' => $itemType->id,
+                'name' => $itemType->name,
+                'items' => $this->sortItems($items),
+                'outOfStockNumber' => $outOfStockNumber,
+                'inStockNumber' => $inStockNumber,
+            ];
+        }
+
+        return [
+            'data' => [
+                'inventoryItemTypes' => $inventoryItemTypes,
+            ],
+        ];
+    }
+
+    private function getStructuredPurchasedItems($purchasedItems): array
+    {
+        $structuredItems = [];
+        foreach ($purchasedItems as $purchasedItem) {
+            $structuredItems[] = [
+                'id' => $purchasedItem->id,
+                'amount' => $purchasedItem->amount,
+                'packageUnit' => $purchasedItem->packageUnit->name,
+                'leftoverAmountPercentage' => $purchasedItem->leftover_amount_percentage,
+                'price' => $purchasedItem->price,
+                'purchaseDate' => $purchasedItem->purchase_date,
+                'expirationDate' => $purchasedItem->expiration_date,
+                'comment' => $purchasedItem->comment,
+            ];
+        }
+
+        return $structuredItems;
+    }
+
+    private function sortItems($items): array
+    {
+        $items = collect($items);
+
+        $sortedItems = $items->sortBy(function ($item) {
+            if ($item['isEssential']) {
+                switch ($item['stockStatus']) {
+                    case 'out':
+                        return 1;
+                    case 'running_out':
+                        return 2;
+                    case 'in_stock':
+                        return 3;
+                }
+            } else {
+                switch ($item['stockStatus']) {
+                    case 'out':
+                        return 4;
+                    case 'running_out':
+                        return 5;
+                    case 'in_stock':
+                        return 6;
+                }
+            }
+        });
+
+        return $sortedItems->values()->all();
     }
 }

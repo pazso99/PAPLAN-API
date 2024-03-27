@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('item_type_id')->references('id')->on('inventory.item_types');
             $table->integer('expected_lifetime_in_days')->nullable();
             $table->integer('recommended_stock')->nullable();
+            $table->boolean('is_essential')->default(false);
             $table->timestamps();
         });
     }

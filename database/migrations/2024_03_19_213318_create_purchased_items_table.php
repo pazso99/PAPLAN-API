@@ -16,11 +16,12 @@ return new class extends Migration
             $table->boolean('status')->default(true);
             $table->foreignId('item_id')->references('id')->on('inventory.items');
             $table->foreignId('package_unit_id')->references('id')->on('inventory.package_units');
-            $table->integer('amount');
+            $table->double('amount');
             $table->integer('price')->nullable();
             $table->date('purchase_date')->nullable();
             $table->date('expiration_date')->nullable();
             $table->integer('leftover_amount_percentage')->default(100);
+            $table->string('comment')->nullable();
             $table->timestamps();
         });
     }

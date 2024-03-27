@@ -17,11 +17,12 @@ class PurchasedItemUpdateRequest extends FormRequest
             'status' => ['required', 'boolean'],
             'itemId' => ['required', 'integer', 'exists:App\Models\Inventory\Item,id'],
             'packageUnitId' => ['required', 'integer', 'exists:App\Models\Inventory\PackageUnit,id'],
-            'amount' => ['required', 'integer', 'min:1'],
+            'amount' => ['required', 'numeric', 'min:0.001'],
             'price' => ['nullable', 'integer', 'min:1'],
             'purchaseDate' => ['nullable', 'date'],
             'expirationDate' => ['nullable', 'date'],
             'leftoverAmountPercentage' => ['required', 'integer', 'between:0,100'],
+            'comment' => ['nullable', 'string'],
         ];
     }
 }

@@ -36,6 +36,7 @@ class ItemController extends Controller
             'item_type_id' => $request->itemTypeId,
             'expected_lifetime_in_days' => $request->expectedLifetimeInDays,
             'recommended_stock' => $request->recommendedStock,
+            'is_essential' => $request->isEssential,
         ]);
 
         $item->packageUnits()->attach($request->packageUnitIds);
@@ -70,6 +71,7 @@ class ItemController extends Controller
             'item_type_id' => $request->itemTypeId,
             'expected_lifetime_in_days' => $request->expectedLifetimeInDays,
             'recommended_stock' => $request->recommendedStock,
+            'is_essential' => $request->isEssential,
         ]);
 
         $item->packageUnits()->detach();

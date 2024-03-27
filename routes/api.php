@@ -24,6 +24,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/spending-data', [DashboardController::class, 'getSpendingData']);
         Route::get('/recipes-data', [DashboardController::class, 'getRecipesData']);
         Route::get('/notes-data', [DashboardController::class, 'getNotesData']);
+        Route::get('/inventory-data', [DashboardController::class, 'getInventoryData']);
     });
 
     Route::prefix('/spending')->group(function () {
@@ -103,9 +104,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
 
         Route::prefix('/purchased-items')->group(function () {
-            // Route::get('/get-stock-categories', [PurchasedItemController::class, 'getStockCategories']);
-            // Route::get('/get-stock-items/{category}', [PurchasedItemController::class, 'getStockItemsByCategory']);
-            // Route::get('/get-stock-item/{category}/{item}', [PurchasedItemController::class, 'getStockItem']);
+            Route::get('/use-item/{purchasedItem}', [PurchasedItemController::class, 'useItem']);
 
             Route::get('/', [PurchasedItemController::class, 'index']);
             Route::post('/', [PurchasedItemController::class, 'store']);

@@ -27,6 +27,7 @@ class ItemResource extends JsonResource
             'packageUnits' => PackageUnitResource::collection($this->packageUnits),
             'expectedLifetimeInDays' => $this->expected_lifetime_in_days,
             'recommendedStock' => $this->recommended_stock,
+            'isEssential' => $this->is_essential,
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
         ];

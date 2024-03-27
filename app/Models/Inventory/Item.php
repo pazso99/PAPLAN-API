@@ -10,7 +10,7 @@ class Item extends Model
     use HasFactory;
 
     protected $table = 'inventory.items';
-    protected $fillable = ['status', 'name', 'slug', 'item_type_id', 'expected_lifetime_in_days', 'recommended_stock'];
+    protected $fillable = ['status', 'name', 'slug', 'item_type_id', 'expected_lifetime_in_days', 'recommended_stock', 'is_essential'];
 
     public function scopeActive($query)
     {

@@ -27,6 +27,7 @@ class PurchasedItemResource extends JsonResource
                 ],
                 'expectedLifetimeInDays' => $this->item->expected_lifetime_in_days,
                 'recommendedStock' => $this->item->recommended_stock,
+                'isEssential' => $this->item->is_essential,
             ],
             'packageUnit' => [
                 'id' => $this->packageUnit->id,
@@ -37,6 +38,7 @@ class PurchasedItemResource extends JsonResource
             'purchaseDate' => $this->purchase_date,
             'expirationDate' => $this->expiration_date,
             'leftoverAmountPercentage' => $this->leftover_amount_percentage,
+            'comment' => $this->comment,
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
         ];
