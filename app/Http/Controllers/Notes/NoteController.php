@@ -11,7 +11,7 @@ use App\Models\Notes\Note;
 class NoteController extends Controller
 {
     /**
-     * Get all recipes
+     * Get all notes
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */

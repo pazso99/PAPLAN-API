@@ -5,6 +5,7 @@
 /public/storage
 /storage/*.key
 /storage/spending.csv
+/storage/inventoryData.php
 /vendor
 .env
 .env.backup
