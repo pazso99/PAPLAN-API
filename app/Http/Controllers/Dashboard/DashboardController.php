@@ -191,7 +191,7 @@ class DashboardController extends Controller
                 'transactionCategory' => [
                     'id' => $transaction->transactionCategory->id,
                     'name' => $transaction->transactionCategory->name,
-                    'transactionType' => $transaction->transactionCategory->transactionType,
+                    'transactionType' => $transaction->transactionCategory->transaction_type,
                 ],
                 'account' => [
                     'id' => $transaction->account->id,
