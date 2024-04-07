@@ -6,6 +6,7 @@
 /storage/*.key
 /storage/spending.csv
 /storage/inventoryData.php
+/storage/monthlyMetadata.php
 /vendor
 .env
 .env.backup
