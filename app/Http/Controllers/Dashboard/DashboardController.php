@@ -205,9 +205,9 @@ class DashboardController extends Controller
 
         // Getting diagram data
         $diagramData = [
-            'yearlyBalance' => DB::table('spending.actual_balances')
-                ->select(['date', 'amount'])
-                ->where('date', 'like', "$request->year%")
+            'yearlyBalance' => DB::table('spending.monthly_metadata')
+                ->select([DB::Raw("CONCAT(year, '-', month) AS date"), 'total_balance AS amount'])
+                ->where('year', '=', $request->year)
                 ->orderBy('date')
                 ->get()
         ];

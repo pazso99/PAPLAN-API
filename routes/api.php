@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Config\ConfigController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Inventory\ItemController;
 use App\Http\Controllers\Inventory\ItemTypeController;
@@ -11,6 +10,7 @@ use App\Http\Controllers\Inventory\PurchasedItemController;
 use App\Http\Controllers\Spending\AccountController;
 use App\Http\Controllers\Spending\TransactionCategoryController;
 use App\Http\Controllers\Spending\TransactionController;
+use App\Http\Controllers\Spending\ConfigController as SpendingConfigController;
 use App\Http\Controllers\Recipes\RecipeController;
 use App\Http\Controllers\Notes\NoteController;
 
@@ -52,9 +52,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::delete('/{transaction}', [TransactionController::class, 'destroy']);
         });
 
-        Route::get('/actual-balances', [ConfigController::class, 'getSpendingActualBalances']);
-        Route::get('/settings', [ConfigController::class, 'getSpendingSettings']);
-        Route::post('/settings', [ConfigController::class, 'updateSpendingSettings']);
+        Route::get('/settings', [SpendingConfigController::class, 'getSpendingSettings']);
+        Route::post('/settings', [SpendingConfigController::class, 'updateSpendingSettings']);
+        Route::post('/calculate-month-metadata', [SpendingConfigController::class, 'calculateMonthMetadata']);
+        Route::get('/months-metadata', [SpendingConfigController::class, 'getMonthsMetadata']);
+        Route::post('/update-month-metadata/{monthlyMetadata}', [SpendingConfigController::class, 'updateMonthMetadata']);
     });
 
     Route::prefix('/recipes')->group(function () {

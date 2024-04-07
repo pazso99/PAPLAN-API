@@ -4,7 +4,7 @@ namespace App\Http\Requests\Spending;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SettingsUpdateRequest extends FormRequest
+class MonthMetadataCalculateRequest extends FormRequest
 {
     /**
      * Get the validation rules that apply to the request.
@@ -14,7 +14,8 @@ class SettingsUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'configs' => ['required'],
+            'year' => ['required'],
+            'month' => ['required'],
         ];
     }
 }
