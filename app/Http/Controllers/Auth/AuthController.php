@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -17,6 +18,7 @@ class AuthController extends Controller
         $user = User::where('name', $request->name)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            $this->saveLoginAttempt($request, true);
             return response()->json([
                 'message' => ['Incorrect credentials'],
             ], 401);
@@ -24,6 +26,7 @@ class AuthController extends Controller
 
         $user->tokens()->delete();
 
+        $this->saveLoginAttempt($request);
         return new LoginResource($user);
     }
 
@@ -35,5 +38,15 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->tokens()->delete();
+    }
+
+    private function saveLoginAttempt(Request $request, $failed = false)
+    {
+        DB::table('login_attempts')->insert([
+            'date' => now(),
+            'ip' => $request->ip(),
+            'user' => $request->name,
+            'failed' => $failed,
+        ]);
     }
 }
