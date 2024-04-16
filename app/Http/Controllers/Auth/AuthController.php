@@ -42,9 +42,11 @@ class AuthController extends Controller
 
     private function saveLoginAttempt(Request $request, $failed = false)
     {
+        preg_match('/(\d+\.\d+\.)(\d+\.\d+)/', $request->ip(), $matches);
+
         DB::table('login_attempts')->insert([
             'date' => now(),
-            'ip' => $request->ip(),
+            'ip' => $matches[2],
             'user' => $request->name,
             'failed' => $failed,
         ]);
