@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('login_attempts', function (Blueprint $table) {
             $table->id();
             $table->datetime('date');
-            $table->ipAddress('ip');
-            $table->string('user');
+            $table->string('ip', 12);
+            $table->string('user', 40);
             $table->boolean('failed');
         });
     }
