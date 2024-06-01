@@ -41,6 +41,7 @@ class SpendingMonthlyMetadataSeeder extends Seeder
                         'income' => $account['income'],
                         'basic_expense' => $account['basic_expense'],
                         'premium_expense' => $account['premium_expense'],
+                        'transfer' => $account['transfer'],
                     ]
                 );
             }

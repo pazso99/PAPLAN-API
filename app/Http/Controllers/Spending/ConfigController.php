@@ -75,6 +75,7 @@ class ConfigController extends Controller
                     'income' => $monthMetadataAccount->income,
                     'basicExpense' => $monthMetadataAccount->basic_expense,
                     'premiumExpense' => $monthMetadataAccount->premium_expense,
+                    'transfer' => $monthMetadataAccount->transfer,
                 ];
             }
 
@@ -112,6 +113,7 @@ class ConfigController extends Controller
                 'income' => $account['income'],
                 'basic_expense' => $account['basicExpense'],
                 'premium_expense' => $account['premiumExpense'],
+                'transfer' => $account['transfer'],
             ]);
         }
 
