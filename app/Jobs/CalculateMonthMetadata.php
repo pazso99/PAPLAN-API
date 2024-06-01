@@ -55,6 +55,7 @@ class CalculateMonthMetadata implements ShouldQueue
                 'income' => 0,
                 'basic_expense' => 0,
                 'premium_expense' => 0,
+                'transfer' => 0,
             ];
             $monthlyData['total_balance'] += $balance;
         }
@@ -84,6 +85,12 @@ class CalculateMonthMetadata implements ShouldQueue
                 $monthlyData['total_income'] += $transaction->amount;
                 $accounts[$transaction->account_id]['balance'] += $transaction->amount;
                 $monthlyData['total_balance'] += $transaction->amount;
+            } else if ($transaction->transactionCategory->transaction_type === 'transfer') {
+                $meta = json_decode($transaction->meta);
+                $accounts[$transaction->account_id]['balance'] -= $transaction->amount;
+                $accounts[$transaction->account_id]['transfer'] += $transaction->amount;
+                $accounts[$meta->toAccountId]['balance'] += $transaction->amount;
+                $accounts[$meta->toAccountId]['income'] += $transaction->amount;
             }
         }
 
@@ -111,6 +118,7 @@ class CalculateMonthMetadata implements ShouldQueue
                 'income' => $account['income'],
                 'basic_expense' => $account['basic_expense'],
                 'premium_expense' => $account['premium_expense'],
+                'transfer' => $account['transfer'],
             ]);
         }
 
@@ -127,11 +135,6 @@ class CalculateMonthMetadata implements ShouldQueue
 
     private function getAccountBalance(Account $account)
     {
-        $currentDate = Carbon::now();
-        if ($currentDate->year === $this->year && $currentDate->format('m') === $this->month) {
-            return $account->balance;
-        }
-
         $date = Carbon::createFromDate($this->year, $this->month);
         $previousDate = $date->subMonthsNoOverflow();
 
