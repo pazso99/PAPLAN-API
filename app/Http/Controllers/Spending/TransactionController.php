@@ -19,7 +19,7 @@ class TransactionController extends Controller
      */
     public function index()
     {
-        return TransactionResource::collection(Transaction::all());
+        return TransactionResource::collection(Transaction::orderBy('date', 'desc')->orderBy('id', 'desc')->get());
     }
 
     /**
