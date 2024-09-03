@@ -11,6 +11,7 @@ use App\Models\Spending\Transaction;
 use App\Models\Spending\TransactionCategory;
 use App\Models\Recipes\Recipe;
 use App\Models\Notes\Note;
+use App\Models\Spending\MonthlyMetadata;
 
 class DashboardController extends Controller
 {
@@ -93,82 +94,121 @@ class DashboardController extends Controller
 
         // Getting account balance infos
         $transactionDataByAccounts = [];
-        foreach (
-            Account
-                ::active()
-                ->orderBy('id')
-                ->get()
-            as $account
+
+        if (
+            $request->month === null ||
+            (
+                $request->year === now()->format('Y') &&
+                $request->month === now()->format('m')
+            )
         ) {
-            $totalIncome = $account
-                ->transactions()
-                ->active()
-                ->whereYear('date', $request->year)
-                ->when($request->filled('month'), function ($query) use ($request) {
-                    return $query->whereMonth('date', $request->month);
-                })
-                ->whereHas('transactionCategory', function ($query) {
-                    $query->where('transaction_type', 'income');
-                })
-                ->sum('amount');
+            foreach (
+                Account
+                    ::active()
+                    ->orderBy('id')
+                    ->get()
+                as $account
+            ) {
+                $totalIncome = $account
+                    ->transactions()
+                    ->active()
+                    ->whereYear('date', $request->year)
+                    ->when($request->filled('month'), function ($query) use ($request) {
+                        return $query->whereMonth('date', $request->month);
+                    })
+                    ->whereHas('transactionCategory', function ($query) {
+                        $query->where('transaction_type', 'income');
+                    })
+                    ->sum('amount');
 
-            $incomeFromTransfers = Transaction
-                ::active()
-                ->whereYear('date', $request->year)
-                ->when($request->filled('month'), function ($query) use ($request) {
-                    return $query->whereMonth('date', $request->month);
-                })
-                ->whereHas('transactionCategory', function ($query) {
-                    $query->where('transaction_type', 'transfer');
-                })
-                ->whereJsonContains('meta->toAccountId', $account->id)
-                ->sum('amount');
+                $incomeFromTransfers = Transaction
+                    ::active()
+                    ->whereYear('date', $request->year)
+                    ->when($request->filled('month'), function ($query) use ($request) {
+                        return $query->whereMonth('date', $request->month);
+                    })
+                    ->whereHas('transactionCategory', function ($query) {
+                        $query->where('transaction_type', 'transfer');
+                    })
+                    ->whereJsonContains('meta->toAccountId', $account->id)
+                    ->sum('amount');
 
-            $totalExpense = $account
-                ->transactions()
-                ->active()
-                ->whereYear('date', $request->year)
-                ->when($request->filled('month'), function ($query) use ($request) {
-                    return $query->whereMonth('date', $request->month);
-                })
-                ->whereHas('transactionCategory', function ($query) {
-                    $query
-                        ->where('transaction_type', 'expense');
-                })
-                ->sum('amount');
+                $totalExpense = $account
+                    ->transactions()
+                    ->active()
+                    ->whereYear('date', $request->year)
+                    ->when($request->filled('month'), function ($query) use ($request) {
+                        return $query->whereMonth('date', $request->month);
+                    })
+                    ->whereHas('transactionCategory', function ($query) {
+                        $query
+                            ->where('transaction_type', 'expense');
+                    })
+                    ->sum('amount');
 
-            $expenseFromTransfers = $account
-                ->transactions()
-                ->active()
-                ->whereYear('date', $request->year)
-                ->when($request->filled('month'), function ($query) use ($request) {
-                    return $query->whereMonth('date', $request->month);
-                })
-                ->whereHas('transactionCategory', function ($query) {
-                    $query
-                        ->where('transaction_type', 'transfer');
-                })
-                ->sum('amount');
+                $expenseFromTransfers = $account
+                    ->transactions()
+                    ->active()
+                    ->whereYear('date', $request->year)
+                    ->when($request->filled('month'), function ($query) use ($request) {
+                        return $query->whereMonth('date', $request->month);
+                    })
+                    ->whereHas('transactionCategory', function ($query) {
+                        $query
+                            ->where('transaction_type', 'transfer');
+                    })
+                    ->sum('amount');
 
-            $profit = $totalIncome - $totalExpense;
+                $profit = $totalIncome - $totalExpense;
 
-            $totals['balance'] += $account->balance;
-            $totals['income'] += $totalIncome;
-            $totals['expense'] += $totalExpense;
-            $totals['profit'] += $profit;
+                $totals['balance'] += $account->balance;
+                $totals['income'] += $totalIncome;
+                $totals['expense'] += $totalExpense;
+                $totals['profit'] += $profit;
 
-            $totalIncome += $incomeFromTransfers;
-            $totalExpense += $expenseFromTransfers;
-            $profit = $totalIncome - $totalExpense;
-            $transactionDataByAccounts[] = [
-                'id' => $account->id,
-                'name' => $account->name,
-                'balance' => $account->balance,
-                'income' => $totalIncome,
-                'expense' => $totalExpense,
-                'profit' => $profit,
-            ];
-        };
+                $totalIncome += $incomeFromTransfers;
+                $totalExpense += $expenseFromTransfers;
+                $profit = $totalIncome - $totalExpense;
+                $transactionDataByAccounts[] = [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'balance' => $account->balance,
+                    'income' => $totalIncome,
+                    'expense' => $totalExpense,
+                    'profit' => $profit,
+                ];
+            };
+        } else {
+            $monthMetadata = MonthlyMetadata::with('monthlyMetadataAccounts')
+                ->where('year', '=', $request->year)
+                ->where('month', '=', $request->month)
+                ->first();
+
+            foreach (
+                $monthMetadata->monthlyMetadataAccounts()
+                    ->with('account')
+                    ->orderBy('id')
+                    ->get()
+                as $monthMetadataAccount
+            ) {
+                $totalExpense = $monthMetadataAccount->basic_expense + $monthMetadataAccount->premium_expense;
+                $profit = $monthMetadataAccount->income - $totalExpense;
+
+                $totals['balance'] += $monthMetadataAccount->balance;
+                $totals['income'] += $monthMetadataAccount->income;
+                $totals['expense'] += $totalExpense;
+                $totals['profit'] += $profit;
+
+                $transactionDataByAccounts[] = [
+                    'id' => $monthMetadataAccount->account->id,
+                    'name' => $monthMetadataAccount->account->name,
+                    'balance' => $monthMetadataAccount->balance,
+                    'income' => $monthMetadataAccount->income,
+                    'expense' => $totalExpense,
+                    'profit' => $profit,
+                ];
+            }
+        }
 
         // Getting latest transactions
         $latestTransactions = [];

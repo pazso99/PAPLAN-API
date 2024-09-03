@@ -17,7 +17,7 @@ class Kernel extends ConsoleKernel
             $year = now()->format('Y');
             $month = now()->format('m');
             CalculateMonthMetadata::dispatch($year, $month);
-        })->lastDayOfMonth('21:00');
+        })->lastDayOfMonth('19:00');
     }
 
     /**

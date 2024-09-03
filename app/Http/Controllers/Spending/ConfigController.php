@@ -69,7 +69,7 @@ class ConfigController extends Controller
                 as $monthMetadataAccount
             ) {
                 $accounts[] = [
-                    'id' => $monthMetadataAccount->id,
+                    'id' => $monthMetadataAccount->account->id,
                     'accountName' => $monthMetadataAccount->account->name,
                     'balance' => $monthMetadataAccount->balance,
                     'income' => $monthMetadataAccount->income,
