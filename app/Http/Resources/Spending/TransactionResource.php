@@ -28,6 +28,7 @@ class TransactionResource extends JsonResource
             ],
             'account' => [
                 'id' => $this->account->id,
+                'status' => $this->account->status,
                 'name' => $this->account->name,
                 'balance' => $this->account->balance,
             ],
