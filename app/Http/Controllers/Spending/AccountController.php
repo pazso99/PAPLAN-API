@@ -59,6 +59,38 @@ class AccountController extends Controller
      */
     public function update(AccountUpdateRequest $request, Account $account)
     {
+        // if status switched to false, then update all transactions with true status to false
+        if ($account->status && !$request->status) {
+            foreach ($account->transactions as $transaction) {
+                $type = $transaction->transactionCategory->transaction_type;
+                if ($transaction->status) {
+                    if ($type === 'income') {
+                        $transaction->account->balance -= $transaction->amount;
+                    } else if ($type === 'expense') {
+                        $transaction->account->balance += $transaction->amount;
+                    }
+
+                    if ($transaction->meta !== '{}') {
+                        $meta = json_decode($transaction->meta);
+
+                        if ($type === 'transfer') {
+                            $toAccount = Account::find($meta->toAccountId);
+
+                            $transaction->account->balance += $transaction->amount;
+                            $toAccount->balance -= $transaction->amount;
+
+                            $toAccount->save();
+                        }
+                    }
+
+                    $transaction->account->save();
+                    $transaction->update([
+                        'status' => false,
+                    ]);
+                }
+            }
+        }
+
         $account->update([
             'status' => $request->status,
             'name' => $request->name,

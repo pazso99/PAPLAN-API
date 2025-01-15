@@ -42,6 +42,7 @@ class DashboardController extends Controller
 
         foreach ($transactionCategories as $transactionCategory) {
             $sumTransactionAmount = $transactionCategory->transactions()
+                ->active()
                 ->whereYear('date', $year)
                 ->when($month, function ($query) use ($month) {
                     return $query->whereMonth('date', $month);
@@ -158,34 +159,36 @@ class DashboardController extends Controller
                 ->where('month', '=', $month)
                 ->first();
 
-            foreach (
-                $monthMetadata->monthlyMetadataAccounts()
-                    ->with('account')
-                    ->orderBy('id')
-                    ->get()
-                as $monthMetadataAccount
-            ) {
-                $totalExpense = $monthMetadataAccount->basic_expense + $monthMetadataAccount->premium_expense;
-                $profit = $monthMetadataAccount->income - $totalExpense;
+            if ($monthMetadata) {
+                foreach (
+                    $monthMetadata->monthlyMetadataAccounts()
+                        ->with('account')
+                        ->orderBy('id')
+                        ->get()
+                    as $monthMetadataAccount
+                ) {
+                    $totalExpense = $monthMetadataAccount->basic_expense + $monthMetadataAccount->premium_expense;
+                    $profit = $monthMetadataAccount->income - $totalExpense;
 
-                $totals['balance'] += $monthMetadataAccount->balance;
-                $totals['income'] += $monthMetadataAccount->income;
-                $totals['expense'] += $totalExpense;
-                $totals['profit'] += $profit;
+                    $totals['balance'] += $monthMetadataAccount->balance;
+                    $totals['income'] += $monthMetadataAccount->income;
+                    $totals['expense'] += $totalExpense;
+                    $totals['profit'] += $profit;
 
-                if ($monthMetadataAccount->transfer) {
-                    $totals['income'] -= $monthMetadataAccount->transfer;
-                    $totals['profit'] -= $monthMetadataAccount->transfer;
+                    if ($monthMetadataAccount->transfer) {
+                        $totals['income'] -= $monthMetadataAccount->transfer;
+                        $totals['profit'] -= $monthMetadataAccount->transfer;
+                    }
+
+                    $transactionDataByAccounts[] = [
+                        'id' => $monthMetadataAccount->account->id,
+                        'name' => $monthMetadataAccount->account->name,
+                        'balance' => $monthMetadataAccount->balance,
+                        'income' => $monthMetadataAccount->income,
+                        'expense' => $totalExpense,
+                        'profit' => $profit,
+                    ];
                 }
-
-                $transactionDataByAccounts[] = [
-                    'id' => $monthMetadataAccount->account->id,
-                    'name' => $monthMetadataAccount->account->name,
-                    'balance' => $monthMetadataAccount->balance,
-                    'income' => $monthMetadataAccount->income,
-                    'expense' => $totalExpense,
-                    'profit' => $profit,
-                ];
             }
         }
 
