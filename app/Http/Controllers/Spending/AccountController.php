@@ -53,7 +53,7 @@ class AccountController extends Controller
     /**
      * Update one account
      *
-     * @param \App\Http\Requests\Spending\PurchasedItemUpdateRequest $request
+     * @param \App\Http\Requests\Spending\AccountUpdateRequest $request
      * @param \App\Models\Spending\Account $account
      * @return \App\Http\Resources\Spending\AccountResource
      */

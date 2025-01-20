@@ -21,4 +21,9 @@ class TransactionCategory extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    public function categoryGroups()
+    {
+        return $this->belongsToMany(CategoryGroup::class, 'spending.category_group_transaction_category');
+    }
 }
