@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Models\Config;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\Dashboard\SpendingDataRequest;
 use App\Models\Inventory\ItemType;
@@ -29,12 +30,8 @@ class DashboardController extends Controller
             'premiumExpense' => 0,
         ];
 
-        $basicTransactionCategoryIds = json_decode(
-            DB::table('config')->where('key', 'spending_basic_transaction_categories')->value('value')
-        );
-        $premiumTransactionCategoryIds = json_decode(
-            DB::table('config')->where('key', 'spending_premium_transaction_categories')->value('value')
-        );
+        $basicTransactionCategoryIds = Config::getValue('spending_basic_transaction_categories');
+        $premiumTransactionCategoryIds = Config::getValue('spending_premium_transaction_categories');
 
         // Get transaction data by categories
         $transactionDataByCategories = [];
@@ -54,13 +51,16 @@ class DashboardController extends Controller
                 'name' => $transactionCategory->name,
                 'type' => $transactionCategory->transaction_type,
                 'sumTransactionAmount' => $sumTransactionAmount,
+                'expenseCategoryType' => null,
             ];
 
             if (in_array($categoryData['id'], $basicTransactionCategoryIds)) {
                 $totals['basicExpense'] += $categoryData['sumTransactionAmount'];
+                $categoryData['expenseCategoryType'] = 'basic';
             }
             if (in_array($categoryData['id'], $premiumTransactionCategoryIds)) {
                 $totals['premiumExpense'] += $categoryData['sumTransactionAmount'];
+                $categoryData['expenseCategoryType'] = 'premium';
             }
 
             $transactionDataByCategories[] = $categoryData;
@@ -181,8 +181,8 @@ class DashboardController extends Controller
                     }
 
                     $transactionDataByAccounts[] = [
-                        'id' => $monthMetadataAccount->account->id,
-                        'name' => $monthMetadataAccount->account->name,
+                        'id' => $monthMetadataAccount->account->id ?? 0,
+                        'name' => $monthMetadataAccount->account->name ?? 'DELETED',
                         'balance' => $monthMetadataAccount->balance,
                         'income' => $monthMetadataAccount->income,
                         'expense' => $totalExpense,

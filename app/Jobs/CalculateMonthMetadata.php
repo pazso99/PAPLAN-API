@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Config;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,25 +20,25 @@ class CalculateMonthMetadata implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    private $date;
+
     /**
      * Create a new job instance.
      */
     public function __construct(
         private string $year,
         private string $month,
-    ) {}
+    ) {
+        $this->date = Carbon::createFromDate($this->year, $this->month);
+    }
 
     /**
      * Execute the job.
      */
     public function handle(): void
     {
-        $basicExpenseCategories = json_decode(
-            DB::table('config')->where('key', 'spending_basic_transaction_categories')->value('value')
-        );
-        $premiumExpenseCategories = json_decode(
-            DB::table('config')->where('key', 'spending_premium_transaction_categories')->value('value')
-        );
+        $basicExpenseCategories = Config::getValue('spending_basic_transaction_categories');
+        $premiumExpenseCategories = Config::getValue('spending_premium_transaction_categories');
 
         $monthlyData = [
             'total_balance' => 0,
@@ -46,11 +47,17 @@ class CalculateMonthMetadata implements ShouldQueue
             'total_premium_expense' => 0,
         ];
 
-        $accounts = [];
+        $activeAccounts = Account::active()->where('created_at', '<=', $this->date)->orderBy('id')->get();
 
-        foreach (Account::active()->orderBy('id')->get() as $account) {
+        if ($activeAccounts->isEmpty()) {
+            return;
+        }
+
+        $accountInfos = [];
+        foreach ($activeAccounts as $account) {
             $balance = $this->getAccountBalance($account);
-            $accounts[$account->id] = [
+
+            $accountInfos[$account->id] = [
                 'balance' => $balance,
                 'income' => 0,
                 'basic_expense' => 0,
@@ -60,37 +67,35 @@ class CalculateMonthMetadata implements ShouldQueue
             $monthlyData['total_balance'] += $balance;
         }
 
-        foreach (
-            Transaction
-                ::active()
-                ->whereYear('date', $this->year)
-                ->whereMonth('date', $this->month)
-                ->with('transactionCategory')
-                ->get()
-            as $transaction
-        ) {
+        $transactions = Transaction::active()
+            ->whereYear('date', $this->year)
+            ->whereMonth('date', $this->month)
+            ->with('transactionCategory')
+            ->get();
+
+        foreach ($transactions as $transaction) {
             if ($transaction->transactionCategory->transaction_type === 'expense') {
                 if (in_array($transaction->transaction_category_id, $basicExpenseCategories)) {
-                    $accounts[$transaction->account_id]['basic_expense'] += $transaction->amount;
+                    $accountInfos[$transaction->account_id]['basic_expense'] += $transaction->amount;
                     $monthlyData['total_basic_expense'] += $transaction->amount;
                 }
                 if (in_array($transaction->transaction_category_id, $premiumExpenseCategories)) {
-                    $accounts[$transaction->account_id]['premium_expense'] += $transaction->amount;
+                    $accountInfos[$transaction->account_id]['premium_expense'] += $transaction->amount;
                     $monthlyData['total_premium_expense'] += $transaction->amount;
                 }
-                $accounts[$transaction->account_id]['balance'] -= $transaction->amount;
+                $accountInfos[$transaction->account_id]['balance'] -= $transaction->amount;
                 $monthlyData['total_balance'] -= $transaction->amount;
             } else if ($transaction->transactionCategory->transaction_type === 'income') {
-                $accounts[$transaction->account_id]['income'] += $transaction->amount;
+                $accountInfos[$transaction->account_id]['income'] += $transaction->amount;
                 $monthlyData['total_income'] += $transaction->amount;
-                $accounts[$transaction->account_id]['balance'] += $transaction->amount;
+                $accountInfos[$transaction->account_id]['balance'] += $transaction->amount;
                 $monthlyData['total_balance'] += $transaction->amount;
             } else if ($transaction->transactionCategory->transaction_type === 'transfer') {
                 $meta = json_decode($transaction->meta);
-                $accounts[$transaction->account_id]['balance'] -= $transaction->amount;
-                $accounts[$transaction->account_id]['transfer'] += $transaction->amount;
-                $accounts[$meta->toAccountId]['balance'] += $transaction->amount;
-                $accounts[$meta->toAccountId]['income'] += $transaction->amount;
+                $accountInfos[$transaction->account_id]['transfer'] += $transaction->amount;
+                $accountInfos[$meta->toAccountId]['income'] += $transaction->amount;
+                $accountInfos[$transaction->account_id]['balance'] -= $transaction->amount;
+                $accountInfos[$meta->toAccountId]['balance'] += $transaction->amount;
             }
         }
 
@@ -109,7 +114,7 @@ class CalculateMonthMetadata implements ShouldQueue
             $monthMetadataId = $monthMetadata->id;
         }
 
-        foreach ($accounts as $accountId => $account) {
+        foreach ($accountInfos as $accountId => $account) {
             MonthlyMetadataAccount::updateOrInsert([
                 'monthly_metadata_id' => $monthMetadataId,
                 'account_id' => $accountId,
@@ -135,15 +140,22 @@ class CalculateMonthMetadata implements ShouldQueue
 
     private function getAccountBalance(Account $account)
     {
-        $date = Carbon::createFromDate($this->year, $this->month);
-        $previousDate = $date->subMonthsNoOverflow();
+        $previousDate = $this->date->subMonthsNoOverflow();
 
         $monthMetadata = MonthlyMetadata::with('monthlyMetadataAccounts')
             ->where('year', '=', $previousDate->year)
             ->where('month', '=', $previousDate->format('m'))
+            ->whereHas('monthlyMetadataAccounts', function ($query) use ($account) {
+                $query->where('account_id', '=', $account->id);
+            })
             ->first();
 
-        $account = $monthMetadata->monthlyMetadataAccounts()->where('account_id', '=', $account->id)->first();
-        return $account->balance;
+
+        if ($monthMetadata) {
+            $account = $monthMetadata->monthlyMetadataAccounts()->where('account_id', '=', $account->id)->first();
+            return $account->balance;
+        }
+
+        return $account->start_balance;
     }
 }

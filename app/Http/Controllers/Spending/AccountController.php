@@ -34,6 +34,7 @@ class AccountController extends Controller
             'name' => $request->name,
             'slug' => Str::slug($request->name, '-'),
             'balance' => $request->balance,
+            'start_balance' => $request->balance,
         ]);
 
         return AccountResource::make($account);
@@ -53,7 +54,7 @@ class AccountController extends Controller
     /**
      * Update one account
      *
-     * @param \App\Http\Requests\Spending\PurchasedItemUpdateRequest $request
+     * @param \App\Http\Requests\Spending\AccountUpdateRequest $request
      * @param \App\Models\Spending\Account $account
      * @return \App\Http\Resources\Spending\AccountResource
      */
@@ -97,6 +98,11 @@ class AccountController extends Controller
             'slug' => Str::slug($request->name, '-'),
             'balance' => $request->balance,
         ]);
+        if ($account->transactions()->active()->count() === 0) {
+            $account->update([
+                'start_balance' => $request->balance,
+            ]);
+        }
 
         return AccountResource::make($account);
     }

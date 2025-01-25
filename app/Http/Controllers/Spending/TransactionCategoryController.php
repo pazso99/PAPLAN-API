@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Spending;
 
 use App\Http\Controllers\Controller;
+use App\Models\Config;
 use App\Models\Spending\Account;
 use App\Models\Spending\TransactionCategory;
 use App\Http\Resources\Spending\TransactionCategoryResource;
@@ -127,6 +128,6 @@ class TransactionCategoryController extends Controller
 
         $updatedCategoryIds = array_filter($categoryIds, fn($id) => $id !== $categoryId);
 
-        DB::table('config')->where('key', $configKey)->update(['value' => json_encode(array_values($updatedCategoryIds))]);
+        Config::setValue($configKey, $updatedCategoryIds);
     }
 }

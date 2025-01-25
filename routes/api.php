@@ -10,6 +10,7 @@ use App\Http\Controllers\Inventory\PurchasedItemController;
 use App\Http\Controllers\Spending\AccountController;
 use App\Http\Controllers\Spending\TransactionCategoryController;
 use App\Http\Controllers\Spending\TransactionController;
+use App\Http\Controllers\Spending\CategoryGroupController;
 use App\Http\Controllers\Spending\ConfigController as SpendingConfigController;
 use App\Http\Controllers\Recipes\RecipeController;
 use App\Http\Controllers\Notes\NoteController;
@@ -50,6 +51,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/{transaction}', [TransactionController::class, 'show']);
             Route::put('/{transaction}', [TransactionController::class, 'update']);
             Route::delete('/{transaction}', [TransactionController::class, 'destroy']);
+        });
+
+        Route::prefix('/category-groups')->group(function () {
+            Route::get('/', [CategoryGroupController::class, 'index']);
+            Route::post('/', [CategoryGroupController::class, 'store']);
+            Route::get('/{categoryGroup}', [CategoryGroupController::class, 'show']);
+            Route::put('/{categoryGroup}', [CategoryGroupController::class, 'update']);
+            Route::delete('/{categoryGroup}', [CategoryGroupController::class, 'destroy']);
         });
 
         Route::get('/settings', [SpendingConfigController::class, 'getSpendingSettings']);

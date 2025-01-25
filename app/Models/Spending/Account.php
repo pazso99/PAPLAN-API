@@ -10,7 +10,7 @@ class Account extends Model
     use HasFactory;
 
     protected $table = 'spending.accounts';
-    protected $fillable = ['status', 'name', 'slug', 'balance'];
+    protected $fillable = ['status', 'name', 'slug', 'balance', 'start_balance'];
 
     public function scopeActive($query)
     {

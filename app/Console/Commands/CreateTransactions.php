@@ -64,7 +64,8 @@ class CreateTransactions extends Command
                             $generatedAccount = Account::create([
                                 'name' => $accountInfo[0],
                                 'slug' => Str::slug($accountInfo[0], '-'),
-                                'balance' => $accountInfo[1]
+                                'balance' => $accountInfo[1],
+                                'start_balance' => $accountInfo[1]
                             ]);
 
                             $accounts[$accountInfo[0]] = $generatedAccount->id;
