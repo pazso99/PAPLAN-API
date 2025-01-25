@@ -69,8 +69,8 @@ class ConfigController extends Controller
                 as $monthMetadataAccount
             ) {
                 $accounts[] = [
-                    'id' => $monthMetadataAccount->account->id,
-                    'accountName' => $monthMetadataAccount->account->name,
+                    'id' => $monthMetadataAccount->id,
+                    'accountName' => $monthMetadataAccount->account->name ?? 'DELETED',
                     'balance' => $monthMetadataAccount->balance,
                     'income' => $monthMetadataAccount->income,
                     'basicExpense' => $monthMetadataAccount->basic_expense,
@@ -85,6 +85,7 @@ class ConfigController extends Controller
                 'month' => $monthMetadata->month,
                 'totalBalance' => $monthMetadata->total_balance,
                 'totalIncome' => $monthMetadata->total_income,
+                'totalExpense' => $monthMetadata->total_basic_expense + $monthMetadata->total_premium_expense,
                 'totalBasicExpense' => $monthMetadata->total_basic_expense,
                 'totalPremiumExpense' => $monthMetadata->total_premium_expense,
                 'accounts' => $accounts,
