@@ -9,7 +9,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use App\Models\Spending\Account;
 use App\Models\Spending\MonthlyMetadata;
 use App\Models\Spending\MonthlyMetadataAccount;
@@ -140,7 +139,8 @@ class CalculateMonthMetadata implements ShouldQueue
 
     private function getAccountBalance(Account $account)
     {
-        $previousDate = $this->date->subMonthsNoOverflow();
+        $date = new Carbon($this->date);
+        $previousDate = $date->subMonthsNoOverflow();
 
         $monthMetadata = MonthlyMetadata::with('monthlyMetadataAccounts')
             ->where('year', '=', $previousDate->year)
@@ -149,7 +149,6 @@ class CalculateMonthMetadata implements ShouldQueue
                 $query->where('account_id', '=', $account->id);
             })
             ->first();
-
 
         if ($monthMetadata) {
             $account = $monthMetadata->monthlyMetadataAccounts()->where('account_id', '=', $account->id)->first();
