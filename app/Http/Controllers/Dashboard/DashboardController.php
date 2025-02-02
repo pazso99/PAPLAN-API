@@ -167,7 +167,7 @@ class DashboardController extends Controller
                         ->get()
                     as $monthMetadataAccount
                 ) {
-                    $totalExpense = $monthMetadataAccount->basic_expense + $monthMetadataAccount->premium_expense + $monthMetadataAccount->transfer;
+                    $totalExpense = $monthMetadataAccount->basic_expense + $monthMetadataAccount->premium_expense;
                     $profit = $monthMetadataAccount->income - $totalExpense;
 
                     $totals['balance'] += $monthMetadataAccount->balance;
@@ -175,12 +175,17 @@ class DashboardController extends Controller
                     $totals['expense'] += $totalExpense;
                     $totals['profit'] += $profit;
 
+                    if ($monthMetadataAccount->transfer) {
+                        $totals['income'] -= $monthMetadataAccount->transfer;
+                        $totals['profit'] -= $monthMetadataAccount->transfer;
+                    }
+
                     $transactionDataByAccounts[] = [
                         'id' => $monthMetadataAccount->account->id ?? 0,
                         'name' => $monthMetadataAccount->account->name ?? 'DELETED',
                         'balance' => $monthMetadataAccount->balance,
                         'income' => $monthMetadataAccount->income,
-                        'expense' => $totalExpense,
+                        'expense' => $totalExpense + $monthMetadataAccount->transfer,
                         'profit' => $profit,
                     ];
                 }
