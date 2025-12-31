@@ -28,7 +28,7 @@ class CalculateMonthMetadata implements ShouldQueue
         private string $year,
         private string $month,
     ) {
-        $this->date = Carbon::createFromDate($this->year, $this->month);
+        $this->date = Carbon::createFromDate($this->year, $this->month, 1);
     }
 
     /**
